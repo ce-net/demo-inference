@@ -1,0 +1,3 @@
+# wire.ws-door pages file line (~/.config/wire-ws-door/pages on the door node): the page's own grant, from
+# GET /grant?page=inference. 10 minutes, a 2000-token budget per device, and only these abilities.
+inference https://ce-net.com/demos/inference/ 600 infer.generate:generate infer.generate:read infer.generate:withdraw infer.generate:budget=2000 place.near:rank net.rtt:ping net.rtt:read net.rtt:report client.gen:read

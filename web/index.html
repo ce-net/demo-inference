@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070807">
+<title>One Prompt, Many Devices</title>
+<meta name="description" content="Type a prompt. Every token says which device made it and carries that device's signature. Take a device away mid-answer and the next tokens come from another one, without a reload.">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  body{margin:0;background:var(--ground);color:var(--ink);font:400 var(--t-md)/1.5 var(--sans)}
+  main{max-width:var(--max);margin:0 auto;padding:28px var(--m) 64px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+  .brand{font:500 var(--t-xs) var(--mono);letter-spacing:var(--track-crumb);text-transform:uppercase;color:var(--ink-2)}
+  .lede{color:var(--ink-2);max-width:64ch;margin:6px 0 18px}
+  h2{font:500 var(--t-2xs) var(--sans);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--ink-2);margin:0 0 8px}
+  .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;align-items:start}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{padding:13px 14px;min-width:0}
+  .grid>div{min-width:0}
+  table{table-layout:fixed}td:first-child{width:auto}td.n{width:64px}
+  .why,.sub,#log li,td{overflow-wrap:anywhere}
+  form{display:flex;gap:6px;margin-bottom:10px}
+  #q{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);font:500 var(--t-base) var(--mono);padding:9px 12px}
+  #q:focus-visible{outline:1px solid var(--acc)}
+  #status{font:400 var(--t-xs) var(--mono);color:var(--ink-2);margin:4px 0 12px;min-height:1.4em}
+  #answer{min-height:9em;font:400 var(--t-md)/1.75 var(--sans);white-space:pre-wrap;overflow-wrap:anywhere}
+  #answer .tk{border-bottom:2px solid var(--dc,var(--acc));padding:0 0 1px;cursor:help}
+  #answer .tk.bad{background:color-mix(in srgb,var(--bad) 30%,transparent)}
+  #answer .cut{display:inline-block;font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ground);background:var(--acc);padding:0 6px;margin:0 4px;border-radius:2px;vertical-align:2px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font:400 var(--t-xs) var(--mono);color:var(--ink-2)}
+  .sw{display:inline-block;width:10px;height:10px;background:var(--dc);margin-right:6px;vertical-align:-1px}
+  .meter{font:400 var(--t-xs) var(--mono);color:var(--ink-3);margin-top:8px}
+  table{width:100%;border-collapse:collapse;font:400 var(--t-xs) var(--mono)}
+  th{font:500 var(--t-2xs) var(--sans);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--ink-3);text-align:left;padding:4px 0}
+  td{border-top:1px solid var(--line);padding:6px 4px 6px 0;vertical-align:top;font-variant-numeric:tabular-nums}
+  td.n{text-align:right;white-space:nowrap}
+  .why{color:var(--ink-2);font-size:11px;margin-top:2px}
+  .dev{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .dev .sw{margin:0}
+  .now{color:var(--acc);font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+  .gone{color:var(--ink-3);text-decoration:line-through}
+  button.take{font:500 var(--t-2xs) var(--mono);letter-spacing:.06em;text-transform:uppercase}
+  #log{list-style:none;margin:0;padding:0;font:400 var(--t-xs) var(--mono);color:var(--ink-2);max-height:14em;overflow:auto}
+  #log li{border-top:1px solid var(--line);padding:5px 0}#log li:first-child{border-top:0}
+  #log b{color:var(--acc);font-weight:500}
+  pre{margin:0;overflow:auto;font:400 12px/1.6 var(--mono);color:var(--ink);background:var(--well,var(--panel));padding:10px 12px;border:1px solid var(--line);border-radius:var(--r)}
+  .tabs{display:flex;gap:4px;margin-bottom:8px}
+  .tabs button[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+  .sub{font:400 10px var(--mono);color:var(--ink-3);margin-top:6px;overflow-wrap:anywhere}
+  .how{margin-top:26px;color:var(--ink-2);font-size:var(--t-sm);max-width:76ch}
+  .how b{color:var(--ink);font-weight:500}
+  section+section{margin-top:12px}
+  @media (max-width:520px){main{padding:18px 16px 48px}form{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><span class="brand">ce-net / demos</span><nav class="btns glass"><button class="btn quiet" id="theme">Theme</button></nav></div>
+  <div class="crumb">Demos / <b>Inference</b> / Live</div>
+  <h1 class="display">One prompt, many devices.</h1>
+  <p class="lede">Your prompt goes to the device that ranks best for you right now. Every token comes back tagged with the class of device that made it and signed by that device's key; this page checks each signature. Take the device away mid-answer and the rest of the answer comes from the next one, on the same page.</p>
+  <form id="form"><input id="q" value="Explain in three sentences why a mesh of small devices can answer like one machine." aria-label="Prompt" autocomplete="off" maxlength="600"><button class="btn primary" type="submit" id="send">Send</button></form>
+  <div id="status">connecting...</div>
+  <div class="grid">
+    <div>
+      <section class="glass card ticks" aria-label="Answer">
+        <h2>Answer</h2>
+        <div id="answer" aria-live="polite"></div>
+        <div class="legend" id="legend"></div>
+        <div class="meter" id="meter"></div>
+      </section>
+      <section class="glass card" aria-label="Switches">
+        <h2>Switch log</h2>
+        <ul id="log"><li class="empty">No switch yet. Press "Take it away" on the device that is answering.</li></ul>
+      </section>
+    </div>
+    <div>
+      <section class="glass card" aria-label="Devices">
+        <h2>Who answers: place.near ranking, live</h2>
+        <table><thead><tr><th>Device</th><th style="text-align:right">Cost</th></tr></thead><tbody id="rank"></tbody></table>
+        <div class="sub" id="ranksrc"></div>
+      </section>
+      <section class="glass card" aria-label="Code">
+        <h2>The same call in 3 lines</h2>
+        <div class="tabs" id="tabs"></div>
+        <pre id="code">loading from client.gen...</pre>
+        <div class="sub" id="codesrc"></div>
+      </section>
+    </div>
+  </div>
+  <p class="how"><b>How it works.</b> The model is Qwen2.5-0.5B-Instruct (Apache-2.0), served by llama.cpp on each device and wrapped as the cell <code>infer.generate@1</code>. This page holds a short grant (a fresh ed25519 key and a signed capability chain, with a token budget in it) and speaks the cells' own wire protocol over one WebSocket. <code>place.near@1</code> ranks the devices that hold the cell by the round trip this browser measured to each (<code>net.rtt@1</code>), the mesh hop to it (<code>mesh.bench</code>) and the free room it reports. "Take it away" unregisters the cell on that device for 20 seconds; nothing else on the device stops. The answer that was streaming ends with <i>moved</i>, and this page sends the text so far to the next device, which continues it. The code panel is generated by <code>client.gen@1</code> from the cell's own api.</p>
+  <pre id="proof" style="position:absolute;left:-9999px" aria-hidden="true"></pre>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
