@@ -1,6 +1,6 @@
 # One prompt, many devices
 
-**Live page:** [ce-net.com/demos/inference](https://ce-net.com/demos/inference/)
+**Public page:** ce-net.com/demos/inference (goes live after the next site deploy)
 
 Type a prompt. The tokens stream back, each one tagged with the class of device that made it ("ARM server · CPU",
 "x86 VM · 2 vCPU", a GPU box or a Metal laptop when one holds the cell) and signed by that device's key; the page
